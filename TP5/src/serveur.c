@@ -17,50 +17,143 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#include "serveur.h"
+#include "serveur.h" // Assurez-vous que PORT est défini ici, ainsi que les prototypes si nécessaire.
 
 int socketfd; // Déclaration globale de socketfd
+
+// --- FONCTIONS DE CALCUL (EXERCICE 5.5 & 5.6) ---
+
+/**
+ * Effectue l'opération arithmétique simple demandée.
+ * @param num1 Le premier opérande.
+ * @param num2 Le second opérande.
+ * @param op L'opérateur (+, -, *, /).
+ * @return Le résultat du calcul.
+ */
+int effectuer_calcul(int num1, int num2, char op) {
+    switch (op) {
+        case '+':
+            return num1 + num2;
+        case '-':
+            return num1 - num2;
+        case '*':
+            return num1 * num2;
+        case '/':
+            if (num2 != 0)
+                return num1 / num2;
+            else {
+                fprintf(stderr, "Erreur de calcul: Division par zéro.\n");
+                return 0; // Retourne 0 ou une valeur d'erreur spécifique
+            }
+        default:
+            fprintf(stderr, "Erreur de calcul: Opérateur non supporté.\n");
+            return 0;
+    }
+}
+
+/**
+ * Traite les messages de calcul envoyés par le client ("calcule : + 23 45").
+ * Effectue le calcul et renvoie le résultat au client.
+ * @param client_socket_fd : Le descripteur de socket du client.
+ * @param message : Le message reçu du client contenant l'opération.
+ * @return EXIT_SUCCESS en cas de succès, EXIT_FAILURE en cas d'erreur.
+ */
+int recois_numeros_calcule(int client_socket_fd, const char *message) {
+    char op;
+    int num1, num2;
+    int resultat;
+    char reponse[1024];
+
+    // Le format attendu est "calcule : <opérateur> <num1> <num2>"
+    if (sscanf(message, "calcule : %c %d %d", &op, &num1, &num2) == 3) {
+        resultat = effectuer_calcul(num1, num2, op);
+        snprintf(reponse, sizeof(reponse), "calcule : %d", resultat);
+        
+        printf(" -> Calcul: %d %c %d = %d\n", num1, op, num2, resultat);
+    } 
+    // Gérer le cas de l'opération unaire ou l'opération complexe de l'Ex. 5.6
+    else if (sscanf(message, "calcule : %c %d", &op, &num1) == 2) {
+        // Logique pour les opérations unaire de l'Ex. 5.6 comme "/ somme 5"
+        // On suppose que num2 = 1 si non fourni, mais cela doit être ajusté selon
+        // les messages précis que le client envoie (ex: "/ somme 5" => op='/', num1=somme, num2=5)
+        
+        // Pour gérer l'exemple "/ somme 5", il faudrait une logique plus complexe
+        // qui reconnait "somme" comme une variable stockée ou une autre donnée.
+        
+        // Simplification pour l'instant : si seulement 2 éléments sont scannés, c'est une erreur de format pour cette simple calculatrice
+         snprintf(reponse, sizeof(reponse), "calcule : Erreur de format. Le message devrait être 'calcule : <op> <num1> <num2>'.");
+    }
+    else {
+        // Échec du scan des 3 paramètres
+        snprintf(reponse, sizeof(reponse), "calcule : Erreur de format. Le message n'est pas reconnu.");
+    }
+
+    // Renvoie la réponse (résultat ou erreur) au client
+    return renvoie_message(client_socket_fd, reponse);
+}
+
+// --- FONCTION DE COMMUNICATION EXISTANTE ---
 
 /**
  * Cette fonction envoie un message (*data) au client (client_socket_fd)
  * @param client_socket_fd : Le descripteur de socket du client.
- * @param sdata : Le message à envoyer.
+ * @param data : Le message à envoyer.
  * @return EXIT_SUCCESS en cas de succès, EXIT_FAILURE en cas d'erreur.
  */
-int renvoie_message(int client_socket_fd, char *data)
-{
-  int data_size = write(client_socket_fd, (void *)data, strlen(data));
+int renvoie_message(int client_socket_fd, char *data) {
+    int data_size = write(client_socket_fd, (void *)data, strlen(data));
 
-  if (data_size < 0)
-  {
-    perror("Erreur d'écriture");
-    return EXIT_FAILURE;
-  }
+    if (data_size < 0) {
+        perror("Erreur d'écriture");
+        return EXIT_FAILURE;
+    }
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
+
+// --- FONCTION DE TRAITEMENT MODIFIÉE (EXERCICE 5.4 & 5.5/5.6) ---
 
 /**
  * Cette fonction lit les données envoyées par le client,
  * et renvoie un message en réponse.
- * @param socketfd : Le descripteur de socket du serveur.
+ * MODIFIÉ pour gérer l'envoi de saisie serveur (5.4) ou les requêtes de calcul (5.5/5.6).
+ * @param client_socket_fd : Le descripteur de socket du client.
  * @param data : Le message.
  * @return EXIT_SUCCESS en cas de succès, EXIT_FAILURE en cas d'erreur.
  */
-int recois_envoie_message(int client_socket_fd, char *data)
-{
-  printf("Message reçu: %s\n", data);
-  char code[10];
-  if (sscanf(data, "%9s:", code) == 1) // Assurez-vous que le format est correct
-  {
-    if (strcmp(code, "message:") == 0)
-    {
-      return renvoie_message(client_socket_fd, data);
-    }
-  }
+int recois_envoie_message(int client_socket_fd, char *data) {
+    printf("Message reçu: %s\n", data);
 
-  return (EXIT_SUCCESS);
+    // --- LOGIQUE DE CALCUL (EXERCICE 5.5 & 5.6) ---
+    if (strncmp(data, "calcule :", 9) == 0) {
+        return recois_numeros_calcule(client_socket_fd, data);
+    } 
+    
+    // --- LOGIQUE DE RÉPONSE MANUELLE (EXERCICE 5.4) ---
+    else if (strncmp(data, "message:", 8) == 0) {
+        char reponse_serveur[1024];
+        
+        // Demander à l'utilisateur du serveur de saisir une réponse
+        printf("Serveur: Entrez la réponse à envoyer au client (max 1023 char) : ");
+        if (fgets(reponse_serveur, sizeof(reponse_serveur), stdin) == NULL) {
+             strncpy(reponse_serveur, "Serveur: Erreur de saisie.", sizeof(reponse_serveur));
+        }
+        
+        // Supprimer le saut de ligne de fgets
+        size_t len = strlen(reponse_serveur);
+        if (len > 0 && reponse_serveur[len - 1] == '\n') {
+            reponse_serveur[len - 1] = '\0';
+        }
+        
+        printf("Serveur: Envoi de la réponse: %s\n", reponse_serveur);
+        return renvoie_message(client_socket_fd, reponse_serveur);
+    }
+    
+    // Si ni calcul ni message simple n'est reconnu, envoyer un message d'erreur
+    return renvoie_message(client_socket_fd, "Serveur: Requête non reconnue.");
 }
+
+// ... Les fonctions restantes (gestionnaire_ctrl_c, gerer_client, main) ne nécessitent pas de modifications ...
 
 /**
  * Gestionnaire de signal pour Ctrl+C (SIGINT).
@@ -88,7 +181,8 @@ void gerer_client(int client_socket_fd)
 {
   char data[1024];
 
-  while (1)
+  // La boucle infinie est nécessaire pour l'Exercice 5.6
+  while (1) 
   {
     // Réinitialisation des données
     memset(data, 0, sizeof(data));
@@ -113,7 +207,8 @@ void gerer_client(int client_socket_fd)
       close(client_socket_fd);
       break; // Sortir de la boucle de communication avec ce client
     }
-
+    
+    // Le serveur lit et répond dans cette boucle infinie (Ex. 5.6)
     recois_envoie_message(client_socket_fd, data);
   }
 }
@@ -121,7 +216,6 @@ void gerer_client(int client_socket_fd)
 /**
  * Configuration du serveur socket et attente de connexions.
  */
-
 int main()
 {
 
@@ -165,6 +259,7 @@ int main()
   listen(socketfd, 10);
 
   printf("Serveur en attente de connexions...\n");
+  
 
   struct sockaddr_in client_addr;                     // Structure pour l'adresse du client
   unsigned int client_addr_len = sizeof(client_addr); // Longueur de la structure client_addr

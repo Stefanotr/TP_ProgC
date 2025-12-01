@@ -14,9 +14,19 @@
 #define PORT 8089
 
 /*
- * Fonction d'envoi et de réception de messages
- * Il faut un argument : l'identifiant de la socket
+ * @brief Fonction pour envoyer et recevoir des messages de type "message: ".
+ * @param socketfd : L'identifiant de la socket.
  */
 int envoie_recois_message(int socketfd);
+
+/*
+ * @brief Nouvelle fonction pour envoyer une requête de calcul au serveur au format "calcule : op num1 num2". (Ex. 5.5)
+ * @param socketfd : L'identifiant de la socket.
+ * @param op : L'opérateur (+, -, *, /).
+ * @param num1 : Le premier nombre.
+ * @param num2 : Le second nombre.
+ * @return 0 en cas de succès, -1 en cas d'erreur.
+ */
+int envoie_operateur_numeros(int socketfd, char op, int num1, int num2);
 
 #endif
