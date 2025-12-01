@@ -73,12 +73,6 @@ int recois_numeros_calcule(int client_socket_fd, const char *message) {
     } 
     // Gérer le cas de l'opération unaire ou l'opération complexe de l'Ex. 5.6
     else if (sscanf(message, "calcule : %c %d", &op, &num1) == 2) {
-        // Logique pour les opérations unaire de l'Ex. 5.6 comme "/ somme 5"
-        // On suppose que num2 = 1 si non fourni, mais cela doit être ajusté selon
-        // les messages précis que le client envoie (ex: "/ somme 5" => op='/', num1=somme, num2=5)
-        
-        // Pour gérer l'exemple "/ somme 5", il faudrait une logique plus complexe
-        // qui reconnait "somme" comme une variable stockée ou une autre donnée.
         
         // Simplification pour l'instant : si seulement 2 éléments sont scannés, c'est une erreur de format pour cette simple calculatrice
          snprintf(reponse, sizeof(reponse), "calcule : Erreur de format. Le message devrait être 'calcule : <op> <num1> <num2>'.");
@@ -153,7 +147,7 @@ int recois_envoie_message(int client_socket_fd, char *data) {
     return renvoie_message(client_socket_fd, "Serveur: Requête non reconnue.");
 }
 
-// ... Les fonctions restantes (gestionnaire_ctrl_c, gerer_client, main) ne nécessitent pas de modifications ...
+// ... Les fonctions restantes (gerer_client, main) ne nécessitent pas de modifications ...
 
 /**
  * Gestionnaire de signal pour Ctrl+C (SIGINT).
@@ -161,6 +155,8 @@ int recois_envoie_message(int client_socket_fd, char *data) {
  */
 void gestionnaire_ctrl_c(int signal)
 {
+  (void)signal; // FIX: Indique au compilateur que ce paramètre est intentionnellement ignoré.
+
   printf("\nSignal Ctrl+C capturé. Sortie du programme.\n");
 
   // Fermer le socket si ouvert

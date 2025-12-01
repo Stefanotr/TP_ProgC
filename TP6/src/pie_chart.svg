@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#ffffff" />
+  <text x="200" y="20" font-size="16" text-anchor="middle">Top 7 Couleurs de l'Image</text>
+  <path d="M200.00,200.00 L200.00,50.00 A150.00,150.00 0 0,1 317.27,106.48 Z" fill="#ffffff" />
+  <path d="M200.00,200.00 L317.27,106.48 A150.00,150.00 0 0,1 346.24,233.38 Z" fill="#e3dbdb" />
+  <path d="M200.00,200.00 L346.24,233.38 A150.00,150.00 0 0,1 265.08,335.15 Z" fill="#000000" />
+  <path d="M200.00,200.00 L265.08,335.15 A150.00,150.00 0 0,1 134.92,335.15 Z" fill="#1f1f1f" />
+  <path d="M200.00,200.00 L134.92,335.15 A150.00,150.00 0 0,1 53.76,233.38 Z" fill="#eeeeee" />
+  <path d="M200.00,200.00 L53.76,233.38 A150.00,150.00 0 0,1 82.73,106.48 Z" fill="#beb7b7" />
+  <path d="M200.00,200.00 L82.73,106.48 A150.00,150.00 0 0,1 200.00,50.00 Z" fill="#9b9595" />
+</svg>
